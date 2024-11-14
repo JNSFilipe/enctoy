@@ -1,5 +1,5 @@
-import gzip
 import torch
+import deflate
 import numpy as np
 import scipy as sp
 from typing import Tuple, List
@@ -31,8 +31,10 @@ def decode_image(img_path: str, height: int, width: int, quality: int) -> torch.
     """Decode the image (simplified)"""
     # Decode using constrictor
     decoded_data = []
-    with gzip.open(img_path, "rb") as f:
-        decoded_data = np.frombuffer(f.read(), dtype=np.int16)
+    with open(img_path, "rb") as f:
+        decoded_data = f.read()
+    decoded_data = deflate.deflate_decompress(decoded_data, width*height*16)
+    decoded_data = np.frombuffer(decoded_data, dtype=np.int16)
     decoded_data = np.array(decoded_data).reshape(-1, BLOCK_SIZE**2).tolist()
 
     q_matrix = get_quantization_from_quality(quality)

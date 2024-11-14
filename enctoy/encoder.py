@@ -1,5 +1,5 @@
-import gzip
 import torch
+import deflate
 import scipy as sp
 import numpy as np
 from typing import Tuple, List
@@ -61,6 +61,6 @@ def encode_image(image: torch.Tensor, quality:int, save_path:str) -> List[int]:
 
     # Now we use constrictor for entropy coding
     encoded_data = np.array(encoded_data).flatten().astype(np.int16)
-    with gzip.open(save_path, "wb", compresslevel=9) as f:
-        f.write(encoded_data.tobytes())
-    # # return encoded_data
+    bitstream = deflate.deflate_compress(encoded_data, 12)
+    with open(save_path, "wb") as f:
+        f.write(bitstream)
