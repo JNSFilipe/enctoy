@@ -1,3 +1,16 @@
+# Ignore binary files and jpegs
+*.bin
+*.jpg
+*.jpeg
+.test/
+
+# Ignore emacs temp files
+\.#*
+
+# Ignore uv stuff
+.python-version
+uv.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
