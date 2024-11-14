@@ -1,16 +1,14 @@
 import torch
 import deflate
-import scipy as sp
 import numpy as np
+from scipy.fftpack import dct
 from typing import Tuple, List
 from enctoy.commun import ZIGZAG_ORDER, get_quantization_from_quality
 
 # Function to perform Discrete Cosine Transform (DCT)
 def dct2(block: torch.Tensor) -> torch.Tensor:
     """Perform 2D DCT on a block"""
-    # return torch.fft.fftshift(torch.fft.fft2(torch.fft.ifftshift(block)))
-    # return torch.tensor(sp.fft.dctn(block))
-    return torch.tensor(sp.fft.dct(block))
+    return torch.tensor(dct(dct(block.numpy()-128, axis=0, norm="ortho"), axis=1, norm="ortho"))
 
 
 # Quantization function
@@ -36,7 +34,7 @@ def split_into_blocks(image: torch.Tensor, block_size: int = 8) -> List[torch.Te
     return blocks
 
 # Function to encode the image using a simplified JPEG encoder
-def encode_image(image: torch.Tensor, quality:int, save_path:str) -> List[int]:
+def encode_image(image: torch.Tensor, quality:int, save_path:str):
     """Encode the image using a simplified JPEG encoder"""
     blocks = split_into_blocks(image)
     encoded_data = []
@@ -56,11 +54,10 @@ def encode_image(image: torch.Tensor, quality:int, save_path:str) -> List[int]:
         # print(zigzagged)
 
         # Append the zigzagged coefficients for entropy coding
-        # encoded_data.append(zigzagged.numpy().astype(np.uint8))
-        encoded_data.append(zigzagged.numpy().astype(np.int16))
+        encoded_data.append(zigzagged.numpy().astype(np.int8))
 
     # Now we use constrictor for entropy coding
-    encoded_data = np.array(encoded_data).flatten().astype(np.int16)
+    encoded_data = np.array(encoded_data).flatten().astype(np.int8)
     bitstream = deflate.deflate_compress(encoded_data, 12)
     with open(save_path, "wb") as f:
         f.write(bitstream)

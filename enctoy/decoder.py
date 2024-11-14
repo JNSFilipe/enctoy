@@ -1,7 +1,7 @@
 import torch
 import deflate
 import numpy as np
-import scipy as sp
+from scipy.fftpack import idct
 from typing import Tuple, List
 from enctoy.commun import BLOCK_SIZE, ZIGZAG_ORDER,get_quantization_from_quality
 
@@ -22,19 +22,17 @@ def dequantize(block: torch.Tensor, quantization_table: torch.Tensor) -> torch.T
 # Inverse DCT (simplified)
 def idct2(block: torch.Tensor) -> torch.Tensor:
     """Perform inverse 2D DCT"""
-    # return torch.fft.ifftshift(torch.fft.ifft2(torch.fft.fftshift(block)))
-    # return torch.tensor(sp.fft.idctn(block))
-    return torch.tensor(sp.fft.idct(block))
+    return torch.tensor(idct(idct(block.numpy(), axis=0, norm="ortho"), axis=1, norm="ortho"))+128
 
 # Function to decode the encoded data (simplified)
 def decode_image(img_path: str, height: int, width: int, quality: int) -> torch.Tensor:
     """Decode the image (simplified)"""
-    # Decode using constrictor
+    # Deflate
     decoded_data = []
     with open(img_path, "rb") as f:
         decoded_data = f.read()
-    decoded_data = deflate.deflate_decompress(decoded_data, width*height*16)
-    decoded_data = np.frombuffer(decoded_data, dtype=np.int16)
+    decoded_data = deflate.deflate_decompress(decoded_data, width*height*8)
+    decoded_data = np.frombuffer(decoded_data, dtype=np.int8)
     decoded_data = np.array(decoded_data).reshape(-1, BLOCK_SIZE**2).tolist()
 
     q_matrix = get_quantization_from_quality(quality)

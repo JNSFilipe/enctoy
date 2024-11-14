@@ -28,7 +28,12 @@ def get_quantization_from_quality(Q:int) -> torch.Tensor:
     S:float = 5000/Q if Q<50 else 200 - 2*Q
 
     Ts: torch.Tensor = torch.floor((S*JPEG_QUANTIZATION_TABLE + 50) / 100.0)
-    Ts[Ts==0] = 1
+    Ts[Ts<=0] = 1
+
+    # TODO: This statement is so that weights fit in 8 bits, must fix this at some point
+    if Q >= 80:
+        Ts = torch.floor(Ts*1.4)
+    ###
 
     return Ts
 
